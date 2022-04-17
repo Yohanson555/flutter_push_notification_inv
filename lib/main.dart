@@ -2,33 +2,55 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(App());
+/// Define a top-level named handler which background/terminated messages will
+/// call.
+///
+/// To verify things are working, check out the native platform logs.
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+
+  print('Handling a background message ${message.messageId}');
 }
 
-class App extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      // Initialize FlutterFire
-      future: Firebase.initializeApp(),
-      builder: (context, snapshot) {
-        // Check for errors
-        if (snapshot.hasError) {
-          return const Directionality(child: Text('error'), textDirection: TextDirection.ltr,);
-        }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
-        // Once complete, show your application
-        if (snapshot.connectionState == ConnectionState.done) {
-          return const MyApp();
-        }
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-        // Otherwise, show something whilst waiting for initialization to complete
-        return const Directionality(child: Text('loading'), textDirection: TextDirection.ltr,);
-      },
-    );
-  }
+  runApp(const MyApp());
 }
+
+// class App extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return FutureBuilder(
+//       // Initialize FlutterFire
+//       future: Firebase.initializeApp(),
+//       builder: (context, snapshot) {
+//         // Check for errors
+//         if (snapshot.hasError) {
+//           return const Directionality(
+//             child: Text('error'),
+//             textDirection: TextDirection.ltr,
+//           );
+//         }
+//
+//         // Once complete, show your application
+//         if (snapshot.connectionState == ConnectionState.done) {
+//           return const MyApp();
+//         }
+//
+//         // Otherwise, show something whilst waiting for initialization to complete
+//         return const Directionality(
+//           child: Text('loading'),
+//           textDirection: TextDirection.ltr,
+//         );
+//       },
+//     );
+//   }
+// }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -77,11 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String messageTitle = "Empty";
   String notificationAlert = "alert";
 
-  FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  
-  int _counter = 0;
-
-@override
+  @override
   void initState() {
     super.initState();
 
@@ -89,27 +107,18 @@ class _MyHomePageState extends State<MyHomePage> {
       print('onMessage handler');
 
       setState(() {
-          messageTitle = message.notification?.title ?? 'Default title';
-          notificationAlert = "New Notification Alert";
-        });
+        messageTitle = message.notification?.title ?? 'Default title';
+        notificationAlert = "New Notification Alert";
+      });
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        print('onMessageOpenedApp handler');
+      print('onMessageOpenedApp handler');
 
+      setState(() {
         messageTitle = message.notification?.title ?? 'Default title';
         notificationAlert = "Application opened from Notification";
-    });
-  }
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      });
     });
   }
 
@@ -142,11 +151,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
